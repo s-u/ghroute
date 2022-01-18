@@ -1,4 +1,5 @@
-GHJAR=graphhopper-web-3.2.jar
+GHVER=4.0
+GHJAR=graphhopper-web-$(GHVER).jar
 
 ghtools.jar: GHTools.java $(GHJAR)
 	rm -rf nz
