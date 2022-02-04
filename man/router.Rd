@@ -2,6 +2,7 @@
 \alias{router}
 \alias{route}
 \alias{gh.profile}
+\alias{gh.translation}
 \title{
   Street Routing Functions
 }
