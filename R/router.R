@@ -64,3 +64,14 @@ route <- function(start.lat, start.lon, end.lat, end.lon, profile, router=.defau
 		})
 	pl
 }
+
+gh.translation <- function(locale) {
+	if (is.null(tmap <- gh$translation.map)) {
+		tmap <- gh$translation.map <- .jnew("com.graphhopper.util.TranslationMap", class.loader=ghroute:::.rJava.class.loader)
+		tmap$doImport()
+	}
+	tr <- tmap$get(locale)
+	if (is.jnull(tr))
+		stop("Translation not found for the given locale.")
+        tr
+}

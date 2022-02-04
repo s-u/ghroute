@@ -8,7 +8,7 @@
 \description{
 \code{router} initializes a GraphHopper router with a specific profile and data sources.
 
-\code{route} computest a route using the specified router.
+\code{route} computes a route using the specified router.
 
 \code{gh.profile} defines a new routing profile
 }
@@ -17,14 +17,13 @@ router(osm.file, path = "graphhopper-cache", profiles = "car", open = TRUE, make
 route(start.lat, start.lon, end.lat, end.lon, profile, router = .default()) 
 gh.profile(name, vehicle = name, weighting = "fastest", turn.costs = FALSE) 
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{osm.file}{path to the Open Street Map file used for routing}
-  \item{path}{path to the GraphHopper cache. If it doesn't exist the
+  \item{osm.file}{string, path to the Open Street Map file used for routing}
+  \item{path}{string, path to the GraphHopper cache. If it doesn't exist the
   cache will be created when first used}
   \item{profiles}{either a character vector or a list with one or more
   objects returned from \code{gh.profile()}. This determines the
-  properties for the routing such as available means of transort, speeds,
+  properties for the routing such as available means of transport, speeds,
   turn penalties etc.}
   \item{open}{logical, if \code{TRUE} then the returned object can be
   used for routing. If \code{FALSE} then the cache is created and
@@ -36,7 +35,7 @@ gh.profile(name, vehicle = name, weighting = "fastest", turn.costs = FALSE)
   \item{start.lon}{scalar numeric, longitude of the starting point}
   \item{end.lat}{scalar numeric, latitude of the end point}
   \item{end.lon}{scalar numeric, longitude of the end point}
-  \item{profile}{either a string or a ghprofile object. If not
+  \item{profile}{either a string or a \code{ghprofile} object. If not
   specified, defaults to the first profile of the router}  
   \item{router}{object returned from the \code{router()} function}
   \item{name}{string, name of the profile}
@@ -71,9 +70,10 @@ the routing algorithm}
 \item{time}{numeric, duration of the trip in seconds}
 \item{weight}{numeric, weight of the route - depends on the routing
 settings, for fastest-route routing it is usually same as the time}
-\item{jobj}{experimental, the path Java object, mainly for debugging
+\item{jobj}{experimental, the path Java object (of the class
+\code{com.graphhopper.ResponsePath}), mainly for debugging
 or accessing advanced features such as turn-by-turn directions, trip
-legs for publis transport etc.}
+legs for public transport etc.}
 
 For further details see the GraphHopper documentation.
 }
@@ -97,6 +97,41 @@ are also automatically added to the contraction hierarchies
 }
 %\seealso{
 %}
-%\examples{
-%}
+\examples{
+dst <- tempfile("osm", fileext=".pbf")
+cache <- tempfile("router-cache")
+
+## download OSM map of Cyprus
+download.file("https://download.geofabrik.de/europe/cyprus-latest.osm.pbf", dst)
+
+library(ghroute)
+## create router for Cyprus with defaults car and fastest
+router(dst, cache)
+
+## compute routes between two points
+rts = route(34.7592, 32.4123, 34.7996, 32.4517)
+## pick the best one (=first)
+rt = rts[[1]]
+
+par(mar=rep(0,4))
+plot(rt$points[,2], rt$points[,1], ty='l', asp=1/cos(32.4/180*pi))
+points(rt$waypoints[,2:1], col=2, pch=4, cex=2)
+
+legend("topleft",,c(
+  sprintf("Distance: \%.2fkm", rt$distance / 1e3),
+  sprintf("Time: \%d:\%02d", as.integer(rt$time / 60), as.integer(rt$time \%\% 60))))
+
+## expert use - return turn-by-turn instructions by querying the Java object
+## get the instructions object
+ins <- rt$jobj$getInstructions()
+## use English locale
+tr <- gh.translation("en")
+## get the descriptions
+sapply(seq.int(ins$size()),
+       function(j) ins$get(j - 1L)$getTurnDescription(tr))
+
+## clean up
+unlink(c(dst, cache), TRUE, FALSE, FALSE)
+
+}
 \keyword{manip}

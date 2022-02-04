@@ -1,2 +1,2 @@
 import(rJava)
-export(router, route, gh.profile)
+export(router, route, gh.profile, gh.translation)
