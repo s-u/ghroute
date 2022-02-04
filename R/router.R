@@ -67,7 +67,7 @@ route <- function(start.lat, start.lon, end.lat, end.lon, profile, router=.defau
 
 gh.translation <- function(locale) {
 	if (is.null(tmap <- gh$translation.map)) {
-		tmap <- gh$translation.map <- .jnew("com.graphhopper.util.TranslationMap", class.loader=ghroute:::.rJava.class.loader)
+		tmap <- gh$translation.map <- .jnew("com.graphhopper.util.TranslationMap", class.loader=.rJava.class.loader)
 		tmap$doImport()
 	}
 	tr <- tmap$get(locale)
