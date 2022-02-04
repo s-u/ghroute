@@ -7,5 +7,13 @@ ghtools.jar: GHTools.java $(GHJAR)
 	jar fc $@ nz
 	rm -rf nz
 
+$(GHJAR):
+	curl -o $@ -L https://graphhopper.com/public/releases/$(GHJAR)
+
+inst: ghtools.jar $(GHJAR)
+	cp -p $^ ../inst/java/
+
 clean:
 	rm -rf nz ghtools.jar *~
+
+.PHONY: inst clean
