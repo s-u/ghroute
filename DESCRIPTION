@@ -6,3 +6,4 @@ Maintainer: Simon Urbanek <simon.urbanek@R-project.org>
 Description: Provides functions for efficient calculation of routes and navigation using Open Street Map and public transport data. It includes GraphHopper and is self-contained without the need of any API or service.
 Imports: rJava (>= 1.0)
 License: Apache License 2.0
+SystemRequirements: Java >= 8
