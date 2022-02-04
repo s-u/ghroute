@@ -13,9 +13,13 @@
 \code{gh.profile} defines a new routing profile
 }
 \usage{
-router(osm.file, path = "graphhopper-cache", profiles = "car", open = TRUE, make.default = TRUE)
+router(osm.file, path = "graphhopper-cache", profiles = "car", open = TRUE,
+       make.default = TRUE)
+
 route(start.lat, start.lon, end.lat, end.lon, profile, router = .default()) 
-gh.profile(name, vehicle = name, weighting = "fastest", turn.costs = FALSE) 
+
+gh.profile(name, vehicle = name, weighting = "fastest", turn.costs = FALSE)
+gh.translation(locale)
 }
 \arguments{
   \item{osm.file}{string, path to the Open Street Map file used for routing}
@@ -42,6 +46,7 @@ gh.profile(name, vehicle = name, weighting = "fastest", turn.costs = FALSE)
   \item{vehicle}{string, mode of transport}
   \item{weighting}{string, weighting type}
   \item{turn.costs}{logical, whether to use turn costs}
+  \item{locale}{string, name of the language locale}
 }
 \details{
 \code{router} must be called at least once to initialize the routing
@@ -52,6 +57,11 @@ that a new cache must be built any time the profiles are changed.
 
 \code{route} calculates one or more routes from the starting point to
 the end point.
+
+\code{gh.translation} loads translation from GraphHopper for
+a given language locale and return the corresponding Java object.
+\code{"en"} is always guaranteed to exist, others depend on the
+GraphHopper installation.
 }
 \value{
 \code{router} returns a router object.
@@ -76,6 +86,14 @@ or accessing advanced features such as turn-by-turn directions, trip
 legs for public transport etc.}
 
 For further details see the GraphHopper documentation.
+
+\code{gh.translation} returns a Java object of the class
+\code{com.graphhopper.util.TranslationMap}.
+
+\code{gh.profile} returns a Java object of the class
+\code{com.graphhopper.config.Profile}. Note that since it is a Java
+object it can be modified by calling methods on it before passing
+it to \code{router}.
 }
 %\references{
 %}
