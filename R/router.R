@@ -34,35 +34,48 @@ router <- function(osm.file, path="graphhopper-cache", profiles="car", open=TRUE
 	chp <- .jarray(lapply(ch.names, function(name) .jnew("com.graphhopper.config.CHProfile", name, class.loader=.rJava.class.loader)))
 	.jcall(h$getCHPreparationHandler(), "Lcom/graphhopper/routing/ch/CHPreparationHandler;", "setCHProfiles", .jcast(chp, "[Lcom/graphhopper/config/CHProfile;"))
 	if (open) h$importOrLoad() else h$importAndClose()
+        rt <- .jnew("nz.urbanek.RGH.GHRouter", h, class.loader=.rJava.class.loader)
 	if (make.default) {
-		gh$router <- h
+		gh$router <- rt
 		gh$default.profile <- ch.names[[1]]
 	}
-	h
+	rt
 }
 
-route <- function(start.lat, start.lon, end.lat, end.lon, profile, router=.default()) {
-	if (missing(profile)) profile <- gh$default.profile
-	if (length(start.lat) > 1) stop("I can route only one trip at a time")
-	req <- .jnew("com.graphhopper.GHRequest", start.lat, start.lon, end.lat, end.lon, class.loader=.rJava.class.loader)
-	req$setProfile(profile)
-	rsp <- router$route(req)
-	if (rsp$hasErrors())
-		stop(errorCondition("GraphHopper routing restulted in errors", errors=rsp$getErrors(), response=rsp, class=c("GHRoutingError", "error")))
-	paths <- rsp$getAll()
-	n <- paths$size()
-	pl <- lapply(seq.int(n), function(i) {
-		path <- paths$get(i - 1L)
-		list(points=matrix(.jcall(gh$tools, "[D", "pointList2ll", path$getPoints(), class.loader=.rJava.class.loader),,2),
-		     waypoints=matrix(.jcall(gh$tools, "[D", "pointList2ll", path$getWaypoints(), class.loader=.rJava.class.loader),,2),
-		     distance=path$getDistance(),
-		     ascend=path$getAscend(),
-		     descend=path$getDescend(),
-		     time=path$getTime()/1000,
-		     weight=path$getRouteWeight(),
-		     jobj=path)
-		})
-	pl
+route <- function(x, ...)
+    UseMethod("route")
+
+route.matrix <- function(x, profile, alt=FALSE, simple=TRUE, silent=FALSE, router=.default()) {
+    if (missing(profile)) profile <- gh$default.profile
+    if (ncol(x) == 2) { ## one route, many points
+        if (nrow(x) < 2)
+            stop("Need at least two waypoints")
+        if (nrow(x) == 2)
+            x <- matrix(t(x), 1)
+        else
+            stop("Multi-point routes are not implemented yet")
+    }
+    if (ncol(x) != 4)
+        stop("Input matrix must have four columns: lat1, lon1, lat2 and lon2")
+    storage.mode(x) <- "double"
+    err <- .jcall(router, "[Z", "routeMatrix", x, profile, if (isTRUE(alt)) FALSE else TRUE)
+    if (!silent && any(err)) warning("Warning, ", sum(err), " routes were not successful")
+    if (simple) {
+        if (alt)
+            warning("alternative routes are discarded from the simple output")
+        if (nrow(x) == 1)
+            matrix(.jcall(router, "[D", "getPoints", 0L),, 2)
+        else
+            matrix(.jcall(router, "[D", "getAllPoints"),, 3)
+    } else
+        GHRoutes(!err, router)
+}
+
+route.default <- function(start.lat, start.lon, end.lat, end.lon, profile, router=.default()) {
+    if (missing(profile)) profile <- gh$default.profile
+    if (length(start.lat) > 1) stop("Use matrix form to compute multiple routes")
+    route.matrix(matrix(c(start.lat, start.lon, end.lat, end.lon), 1),
+                 simple=FALSE, alt=TRUE)
 }
 
 gh.translation <- function(locale) {
