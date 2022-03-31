@@ -21,9 +21,8 @@ router(osm.file, path = "graphhopper-cache", profiles = "car", open = TRUE,
 
 route(x, ...)
 \method{route}{matrix}(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"),
-             silent=FALSE, router=.default(), ...)
-\method{route}{default}(x, start.lon, end.lat, end.lon, profile,
-             output=c("matrix", "sf", "gh"), alt=FALSE, router=.default(), ...)
+             silent=FALSE, threads=1L, router=.default(), ...)
+\method{route}{default}(x, start.lon, end.lat, end.lon, ...)
 
 gh.profile(name, vehicle = name, weighting = "fastest", turn.costs = FALSE)
 gh.translation(locale)
@@ -60,6 +59,9 @@ gh.translation(locale)
     are included in the result is available, otherwise only the best
     route is reported in each case. Note that only the \code{"gh"}
     format supports multiple routes per query.}
+  \item{threads}{integer, number of parallel threads to use for the routing.
+  For large matrices on private machines \code{parallel::detectCores()}
+  or similar may make sense}
   \item{router}{object returned from the \code{router()} function}
   \item{name}{string, name of the profile}
   \item{vehicle}{string, mode of transport}
@@ -77,12 +79,15 @@ that a new cache must be built any time the profiles are changed.
 
 \code{route} calculates one or more routes for each source/destination
 pair. The matrix form requires a matrix with exactly 4 columns
-specifying latitude and longitude for the start and end point
-respectiely. Each row of the input matrix will have exatly one entry in
+specifying latitude and longitude of the start and end point
+respectiely. Each row of the input matrix will have exactly one entry in
 the result.
 
 The scalar (default) version is just a wrapper for
 \code{matrix(c(start.lat, start.lon, end.lat, end.lon), 1)}.
+Note that due to R method argument consistency requirements the first
+argument of the default method is actually called \code{x} even though
+it would better be named \code{start.lat}.
 
 \code{gh.translation} loads translation from GraphHopper for
 a given language locale and return the corresponding Java object.
@@ -110,27 +115,6 @@ The \code{"gh"} output produces an object of the class
 which holds the corresponding Java objects and thus allows for explicit
 queries for different aspects of the routes including the support for
 alternative routes.
-
-%on success returns a list of routes where the first one
-%is considered the best. Each route is a list with the following
-%components:
-%\item{points}{numeric matrix with two columns: latitude and longitude,
-%representing the points along the route}
-%\item{waypoints}{numeric matrix with two columns: latitude and longitude,
-%representing the start/end points snapped to the locations usable by
-%the routing algorithm}
-%\item{distance}{numeric, trip distance in meters}
-%\item{ascend}{numeric, total elevation change up}
-%\item{descend}{numeric, total elevation change down}
-%\item{time}{numeric, duration of the trip in seconds}
-%\item{weight}{numeric, weight of the route - depends on the routing
-%settings, for fastest-route routing it is usually same as the time}
-%\item{jobj}{experimental, the path Java object (of the class
-%\code{com.graphhopper.ResponsePath}), mainly for debugging
-%or accessing advanced features such as turn-by-turn directions, trip
-%legs for public transport etc.}
-
-%For further details see the GraphHopper documentation.
 
 \code{gh.translation} returns a Java object of the class
 \code{com.graphhopper.util.TranslationMap}.

@@ -45,7 +45,8 @@ router <- function(osm.file, path="graphhopper-cache", profiles="car", open=TRUE
 route <- function(x, ...)
     UseMethod("route")
 
-route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"), silent=FALSE, router=.default(), threads, ...) {
+route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"), silent=FALSE,
+	                 threads=1L, router=.default(), ...) {
     output <- match.arg(output)
     switch (output,
             matrix=,
@@ -65,7 +66,7 @@ route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","g
     if (ncol(x) != 4)
         stop("Input matrix must have four columns: lat1, lon1, lat2 and lon2")
     storage.mode(x) <- "double"
-    succ <- if (missing(threads) || threads < 2)
+    succ <- if (missing(threads) || threads < 2L)
        .jcall(router, "[Z", "routeMatrix", x, profile, if (isTRUE(alt)) FALSE else TRUE)
     else
        .jcall(router, "[Z", "routeMatrixParallel", x, profile, if (isTRUE(alt)) FALSE else TRUE, as.integer(threads)[1])
@@ -122,14 +123,9 @@ rts2list <- function(rts, nrow=max(index), index=rts[,3]) {
     l
 }
 
-route.default <- function(x, start.lon, end.lat, end.lon, profile,
-                          output=c("matrix", "sf", "gh"), alt=FALSE,
-			  router=.default(), ...) {
-    if (missing(profile)) profile <- gh$default.profile
+route.default <- function(x, start.lon, end.lat, end.lon, ...) {
     if (length(x) > 1) stop("Use matrix form to compute multiple routes")
-    output <- match.arg(output)
-    route.matrix(matrix(c(x, start.lon, end.lat, end.lon), 1),
-                 output=output, alt=alt)
+    route.matrix(matrix(c(x, start.lon, end.lat, end.lon), 1), ...)
 }
 
 gh.translation <- function(locale) {
