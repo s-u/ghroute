@@ -215,22 +215,14 @@ rts
 
 rts[[1]]
 
-if (FALSE) {
-points(rt$waypoints[,2:1], col=2, pch=4, cex=2)
-
-legend("topleft",,c(
-  sprintf("Distance: \%.2fkm", rt$distance / 1e3),
-  sprintf("Time: \%d:\%02d", as.integer(rt$time / 60), as.integer(rt$time \%\% 60))))
-
 ## expert use - return turn-by-turn instructions by querying the Java object
 ## get the instructions object
-ins <- rt$jobj$getInstructions()
+ins <- rts[[1]]$path$getInstructions()
 ## use English locale
 tr <- gh.translation("en")
 ## get the descriptions
 sapply(seq.int(ins$size()),
        function(j) ins$get(j - 1L)$getTurnDescription(tr))
-}
 
 ## clean up
 unlink(c(dst, cache), TRUE, FALSE, FALSE)
