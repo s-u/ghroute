@@ -106,10 +106,10 @@ route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","g
     } else res
 }
 
-rts2list <- function(rts, nrow, index=m[,3]) {
+rts2list <- function(rts, nrow=max(index), index=rts[,3]) {
     l <- vector("list", nrow)
     if (nrow > 0L) {
-        rl <- rle(rts[,3])
+        rl <- rle(index)
         cs <- cumsum(rl$lengths)
         cs1 <- c(0L, cs) + 1L
         for (i in seq_along(rl$lengths))
