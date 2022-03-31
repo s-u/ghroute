@@ -22,11 +22,28 @@ public class GHRouter {
 
     ResponsePath paths[] = null;
     GHResponse responses[] = null;
+    boolean success[] = null;
     int routes = 0;
+    int routeWorkIndex = -1;
 
     boolean firstOnly = true;
 
     public static final double NA_REAL = Double.longBitsToDouble(0x7ff00000000007a2L);
+
+    class GHRoutingWorker extends Thread {
+	GHRouter router;
+	double[] m;
+	String profile;
+	public GHRoutingWorker(GHRouter router, double[] m, String profile) {
+	    this.router = router;
+	    this.m = m;
+	    this.profile = profile;
+	}
+
+	public void run() {
+	    router.routeMatrixWork(m, profile, true);
+	}
+    }
 
     GHRouter(com.graphhopper.GraphHopper gh) {
 	this.gh = gh;
@@ -68,39 +85,67 @@ public class GHRouter {
 	routes = n;
 	paths = firstOnly ? new ResponsePath[n] : null;
 	responses = firstOnly ? null : new GHResponse[n];
+	success = new boolean[n];
+	routeWorkIndex = -1;
     }
 
     public void reset() {
 	routes = 0;
 	paths = null;
 	responses = null;
+	success = null;
+	routeWorkIndex = -1;
     }
-    
-    public boolean[] routeMatrix(double[] m, String profile, boolean firstOnly) {
-	this.firstOnly = firstOnly;
-	initResults(m.length / 4);
-	int i = 0;
+
+    public synchronized int getNextRouteIndex() {
+	routeWorkIndex++;
+	return routeWorkIndex;
+    }
+
+    void routeMatrixWork(double[] m, String profile, boolean isParallel) {
+	int i = isParallel ? getNextRouteIndex() : 0;
 	GHRequest request = new GHRequest(2);
 	request.setProfile(profile);
-	boolean res[] = new boolean[routes];
 	while (i < routes) {
 	    List<GHPoint> points = new ArrayList<>(2);
 	    points.add(new GHPoint(m[i], m[i + routes]));
 	    points.add(new GHPoint(m[i + routes * 2], m[i + routes * 3]));
 	    request.setPoints(points);
 	    GHResponse response = router.route(request);
-	    res[i] = response.hasErrors();
+	    success[i] = !response.hasErrors();
 	    if (firstOnly) {
 		/* sadly, GHResponse has no way to ask isEmpty()
 		   and yet getBest() will fail in that case so have to get all and check */
 		List<ResponsePath> r_paths = response.getAll();
 		paths[i] = (r_paths == null || r_paths.size() < 1) ? null : response.getBest();
 	    } else responses[i] = response;
-	    i++;
+	    i = isParallel ? getNextRouteIndex() : (i + 1);
 	}
-	return res;
     }
 
+    public boolean[] routeMatrix(double[] m, String profile, boolean firstOnly) {
+	this.firstOnly = firstOnly;
+	initResults(m.length / 4);
+	routeMatrixWork(m, profile, false);
+	return success;
+    }
+
+    public boolean[] routeMatrixParallel(double[] m, String profile, boolean firstOnly, int threads) throws InterruptedException {
+	this.firstOnly = firstOnly;
+	initResults(m.length / 4);
+
+	GHRoutingWorker[] workers = new GHRoutingWorker[threads];
+	int i;
+	for (i = 0; i < threads; i++) {
+	    workers[i] = new GHRoutingWorker(this, m, profile);
+	    workers[i].start();
+	}
+	for (GHRoutingWorker thread : workers)
+	    thread.join();
+
+	return success;
+    }
+    
     public ResponsePath[] getPaths() {
 	return paths;
     }

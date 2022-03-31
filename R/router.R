@@ -45,7 +45,7 @@ router <- function(osm.file, path="graphhopper-cache", profiles="car", open=TRUE
 route <- function(x, ...)
     UseMethod("route")
 
-route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"), silent=FALSE, router=.default(), ...) {
+route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"), silent=FALSE, router=.default(), threads, ...) {
     output <- match.arg(output)
     switch (output,
             matrix=,
@@ -65,10 +65,14 @@ route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","g
     if (ncol(x) != 4)
         stop("Input matrix must have four columns: lat1, lon1, lat2 and lon2")
     storage.mode(x) <- "double"
-    err <- .jcall(router, "[Z", "routeMatrix", x, profile, if (isTRUE(alt)) FALSE else TRUE)
-    if (!silent && any(err)) warning("Warning, ", sum(err), " routes were not successful")
+    succ <- if (missing(threads) || threads < 2)
+       .jcall(router, "[Z", "routeMatrix", x, profile, if (isTRUE(alt)) FALSE else TRUE)
+    else
+       .jcall(router, "[Z", "routeMatrixParallel", x, profile, if (isTRUE(alt)) FALSE else TRUE, as.integer(threads)[1])
+    
+    if (!silent && !all(succ)) warning("Warning, ", sum(!succ), " routes were not successful")
     if (output == "gh")
-        return(GHRoutes(!err, router))
+        return(GHRoutes(succ, router))
 
     res <- if (nrow(x) == 1) {
         rt <- matrix(.jcall(router, "[D", "getPoints", 0L),, 2,
