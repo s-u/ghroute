@@ -106,6 +106,18 @@ route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","g
     } else res
 }
 
+rts2list <- function(rts, nrow, index=m[,3]) {
+    l <- vector("list", nrow)
+    if (nrow > 0L) {
+        rl <- rle(rts[,3])
+        cs <- cumsum(rl$lengths)
+        cs1 <- c(0L, cs) + 1L
+        for (i in seq_along(rl$lengths))
+            l[[rl$value[i]]] <- rts[cs1[i]:cs[i],]
+    }
+    l
+}
+
 route.default <- function(start.lat, start.lon, end.lat, end.lon, profile,
                           output=c("matrix", "sf", "gh"), alt=FALSE, router=.default()) {
     if (missing(profile)) profile <- gh$default.profile
