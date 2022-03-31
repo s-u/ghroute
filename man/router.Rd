@@ -1,6 +1,8 @@
 \name{router}
 \alias{router}
 \alias{route}
+\alias{route.matrix}
+\alias{route.default}
 \alias{gh.profile}
 \alias{gh.translation}
 \title{
@@ -18,10 +20,10 @@ router(osm.file, path = "graphhopper-cache", profiles = "car", open = TRUE,
        make.default = TRUE)
 
 route(x, ...)
-route.matrix(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"),
-             silent=FALSE, router=.default())
-route.default(start.lat, start.lon, end.lat, end.lon, profile,
-             output=c("matrix", "sf", "gh"), alt=FALSE, router=.default())
+\method{route}{matrix}(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"),
+             silent=FALSE, router=.default(), ...)
+\method{route}{default}(x, start.lon, end.lat, end.lon, profile,
+             output=c("matrix", "sf", "gh"), alt=FALSE, router=.default(), ...)
 
 gh.profile(name, vehicle = name, weighting = "fastest", turn.costs = FALSE)
 gh.translation(locale)
@@ -42,7 +44,7 @@ gh.translation(locale)
     router is used as the default router for subseqeunt operations}
   \item{x}{object specifying the waypoints for the routes. See details
     for the supported input specifications.}
-  \item{start.lat}{scalar numeric, latitude of the starting point}
+%  \item{start.lat}{scalar numeric, latitude of the starting point}
   \item{start.lon}{scalar numeric, longitude of the starting point}
   \item{end.lat}{scalar numeric, latitude of the end point}
   \item{end.lon}{scalar numeric, longitude of the end point}
@@ -51,6 +53,9 @@ gh.translation(locale)
   \item{output}{desired output format: \code{"matrix"} for a matrix
     describing the paths, \code{"sf"} for a data frame with a
     \code{"sfc"} geometry column or \code{"gh"} GraphHoppe objects.}
+  \item{times}{optional, vector of start times for time-dependent routing (such as public transport)}
+  \item{silent}{logical, if \code{TRUE} then warnings (such as
+    routing errors) are suppressed}
   \item{alt}{logical, if \code{TRUE} then multiple alternative routes
     are included in the result is available, otherwise only the best
     route is reported in each case. Note that only the \code{"gh"}
@@ -61,6 +66,7 @@ gh.translation(locale)
   \item{weighting}{string, weighting type}
   \item{turn.costs}{logical, whether to use turn costs}
   \item{locale}{string, name of the language locale}
+  \item{...}{parameters passed to methods}
 }
 \details{
 \code{router} must be called at least once to initialize the routing
@@ -165,13 +171,51 @@ library(ghroute)
 ## create router for Cyprus with defaults car and fastest
 router(dst, cache)
 
-## compute routes between two points
-rts = route(34.7592, 32.4123, 34.7996, 32.4517)
-## pick the best one (=first)
-rt = rts[[1]]
+## compute single route between two points
+rt = route(34.7592, 32.4123, 34.7996, 32.4517)
+
+## by default the result is a lat/lon matrix
+str(rt)
 
 par(mar=rep(0,4))
-plot(rt$points[,2], rt$points[,1], ty='l', asp=1/cos(32.4/180*pi))
+plot(rt[,2], rt[,1], ty='l', asp=1/cos(32.4/180*pi))
+
+## it is also possible to compute multiple different
+## routes by supplying a start-end matrix
+m = matrix(c(34.7592, 32.4123, 34.7996, 32.4517,
+             34.7592, 32.4123, 34.6791, 33.044,
+             34.9827, 33.7348, 35.1716, 33.3616),,4,TRUE)
+
+## the result is a big matrix with "index" column
+## refering to the input row
+rts = route(m)
+
+str(rts)
+
+## it is possible to split the result into a list of
+## matrices - each for one input row
+res = rts2list(rts, nrow(m))
+str(res)
+
+plot(rts[,2], rts[,1], ty='n', asp=1/cos(32.4/180*pi))
+for (o in res) lines(o[,2], o[,1])
+
+## if you have sf package, you can get sfc instead:
+have.sf <- requireNamespace("sf", quietly=TRUE)
+if (have.sf) {
+  rts = route(m, output="sf")
+  print(rts)
+  plot(rts$geometry)
+}
+
+## the maximum flexilibity is with "gh" output
+rts = route(m, output="gh")
+
+rts
+
+rts[[1]]
+
+if (FALSE) {
 points(rt$waypoints[,2:1], col=2, pch=4, cex=2)
 
 legend("topleft",,c(
@@ -186,6 +230,7 @@ tr <- gh.translation("en")
 ## get the descriptions
 sapply(seq.int(ins$size()),
        function(j) ins$get(j - 1L)$getTurnDescription(tr))
+}
 
 ## clean up
 unlink(c(dst, cache), TRUE, FALSE, FALSE)

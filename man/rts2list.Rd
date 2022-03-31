@@ -7,7 +7,7 @@ matrices based on the supplied index which is typically part of the
 matrix.
 }
 \usage{
-rts2list(rts, nrow, index = m[, 3])
+rts2list(rts, nrow = max(index), index = rts[, 3])
 }
 \arguments{
   \item{rts}{matrix}

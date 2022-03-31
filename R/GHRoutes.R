@@ -55,6 +55,6 @@ is.na.GHRoutes <- function(x) is.na(x$success) | (x$success == FALSE)
 }
 
 `c.GHRoutes` <- function(...) stop("Sorry, you cannot combine routes")
-`[<-.GHRoutes` <- function(...) stop("Sorry, route lists are not mutable")
-`[[<-.GHRoutes` <- function(...) stop("Sorry, route lists are not mutable")
+`[<-.GHRoutes` <- function(..., value) stop("Sorry, route lists are not mutable")
+`[[<-.GHRoutes` <- function(..., value) stop("Sorry, route lists are not mutable")
 

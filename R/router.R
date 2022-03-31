@@ -45,7 +45,7 @@ router <- function(osm.file, path="graphhopper-cache", profiles="car", open=TRUE
 route <- function(x, ...)
     UseMethod("route")
 
-route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"), silent=FALSE, router=.default()) {
+route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"), silent=FALSE, router=.default(), ...) {
     output <- match.arg(output)
     switch (output,
             matrix=,
@@ -118,12 +118,13 @@ rts2list <- function(rts, nrow=max(index), index=rts[,3]) {
     l
 }
 
-route.default <- function(start.lat, start.lon, end.lat, end.lon, profile,
-                          output=c("matrix", "sf", "gh"), alt=FALSE, router=.default()) {
+route.default <- function(x, start.lon, end.lat, end.lon, profile,
+                          output=c("matrix", "sf", "gh"), alt=FALSE,
+			  router=.default(), ...) {
     if (missing(profile)) profile <- gh$default.profile
-    if (length(start.lat) > 1) stop("Use matrix form to compute multiple routes")
+    if (length(x) > 1) stop("Use matrix form to compute multiple routes")
     output <- match.arg(output)
-    route.matrix(matrix(c(start.lat, start.lon, end.lat, end.lon), 1),
+    route.matrix(matrix(c(x, start.lon, end.lat, end.lon), 1),
                  output=output, alt=alt)
 }
 

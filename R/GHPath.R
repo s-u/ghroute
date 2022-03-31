@@ -29,4 +29,4 @@ as.matrix.GHPath <- function(x, ...) ll(x, ...)
     pt[...]
 }
 
-`[<-.GHPath` <- function(...) stop("Sorry, paths are not mutable")
+`[<-.GHPath` <- function(..., value) stop("Sorry, paths are not mutable")
