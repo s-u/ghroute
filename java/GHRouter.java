@@ -90,7 +90,12 @@ public class GHRouter {
 	    request.setPoints(points);
 	    GHResponse response = router.route(request);
 	    res[i] = response.hasErrors();
-	    if (firstOnly) paths[i] = response.getBest(); else responses[i] = response;
+	    if (firstOnly) {
+		/* sadly, GHResponse has no way to ask isEmpty()
+		   and yet getBest() will fail in that case so have to get all and check */
+		List<ResponsePath> r_paths = response.getAll();
+		paths[i] = (r_paths == null || r_paths.size() < 1) ? null : response.getBest();
+	    } else responses[i] = response;
 	    i++;
 	}
 	return res;

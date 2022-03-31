@@ -4,8 +4,12 @@ GHPath <- function(path)
 length.GHPath <- function(x) if (is.jnull(x$path)) 0L else x$path$getPoints()$size()
 
 print.GHPath <- function(x, ..., short=FALSE) {
+    if (is.jnull(x$path)) {
+        cat("Empty GHPath\n")
+        return(invisible(x))
+    }
     cat("GHPath of ", length(x), " points", if (x$path$hasErrors()) " (with errors!)" else "", "\n", sep='')
-    if (short) return(x)
+    if (short) return(invisible(x))
     pt <- ll(x)
     head(pt, 4)
     if (nrow(pt) > 4) cat("[...]\n")

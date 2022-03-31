@@ -45,7 +45,14 @@ router <- function(osm.file, path="graphhopper-cache", profiles="car", open=TRUE
 route <- function(x, ...)
     UseMethod("route")
 
-route.matrix <- function(x, profile, alt=FALSE, simple=TRUE, silent=FALSE, router=.default()) {
+route.matrix <- function(x, profile, times, alt=FALSE, output=c("matrix","sf","gh"), silent=FALSE, router=.default()) {
+    output <- match.arg(output)
+    switch (output,
+            matrix=,
+                sf=if (alt) {
+                    warning("only gh output supports alternative routes, returning best route only")
+                    alt <- FALSE
+                })
     if (missing(profile)) profile <- gh$default.profile
     if (ncol(x) == 2) { ## one route, many points
         if (nrow(x) < 2)
@@ -60,22 +67,52 @@ route.matrix <- function(x, profile, alt=FALSE, simple=TRUE, silent=FALSE, route
     storage.mode(x) <- "double"
     err <- .jcall(router, "[Z", "routeMatrix", x, profile, if (isTRUE(alt)) FALSE else TRUE)
     if (!silent && any(err)) warning("Warning, ", sum(err), " routes were not successful")
-    if (simple) {
-        if (alt)
-            warning("alternative routes are discarded from the simple output")
-        if (nrow(x) == 1)
-            matrix(.jcall(router, "[D", "getPoints", 0L),, 2)
+    if (output == "gh")
+        return(GHRoutes(!err, router))
+
+    res <- if (nrow(x) == 1) {
+        rt <- matrix(.jcall(router, "[D", "getPoints", 0L),, 2,
+                     dimnames=list(NULL, c("lat", "lon")))
+        if (output == "sf")
+            sf::st_sfc(list(sf::st_linestring(rt[,2:1])), crs=4326)
         else
-            matrix(.jcall(router, "[D", "getAllPoints"),, 3)
-    } else
-        GHRoutes(!err, router)
+            rt
+    } else {
+        rts <- matrix(.jcall(router, "[D", "getAllPoints"),, 3,
+                      dimnames=list(NULL, c("lat", "lon", "index")))
+        if (output == "sf") {
+            ## to handle missing/failed paths correctly we
+            ## create a full list and then assign the individual
+            ## elements; Note that sf_sfc is *really* slow
+            ## and there is nothing we can do about it...
+            l <- vector("list", nrow(x))
+            if (nrow(rts) > 0L) {
+                rl <- rle(rts[,3])
+                cs <- cumsum(rl$lengths)
+                cs1 <- c(0L, cs) + 1L
+                for (i in seq_along(rl$lengths))
+                    l[[rl$value[i]]] <- sf::st_linestring(rts[cs1[i]:cs[i], 2:1])
+            }
+            sf::st_sfc(l)
+        } else
+            rts
+    }
+    ## create a data frame with extra info for sf output
+    if (inherits(res, "sfc")) {
+        df <- data.frame(time=.jcall(router, "[D", "getTimes"),
+                         dist=.jcall(router, "[D", "getDistances"))
+        sf::st_geometry(df) <- res
+        df
+    } else res
 }
 
-route.default <- function(start.lat, start.lon, end.lat, end.lon, profile, router=.default()) {
+route.default <- function(start.lat, start.lon, end.lat, end.lon, profile,
+                          output=c("matrix", "sf", "gh"), alt=FALSE, router=.default()) {
     if (missing(profile)) profile <- gh$default.profile
     if (length(start.lat) > 1) stop("Use matrix form to compute multiple routes")
+    output <- match.arg(output)
     route.matrix(matrix(c(start.lat, start.lon, end.lat, end.lon), 1),
-                 simple=FALSE, alt=TRUE)
+                 output=output, alt=alt)
 }
 
 gh.translation <- function(locale) {
