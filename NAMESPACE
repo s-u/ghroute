@@ -1,5 +1,5 @@
 import(rJava)
-export(router, route, gh.profile, gh.translation)
+export(router, route, gh.profile, gh.translation, rts2list)
 S3method(route, matrix)
 S3method(route, default)
 
