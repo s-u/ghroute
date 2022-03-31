@@ -149,7 +149,7 @@ dst <- tempfile("osm", fileext=".pbf")
 cache <- tempfile("router-cache")
 
 ## download OSM map of Cyprus
-download.file("https://download.geofabrik.de/europe/cyprus-latest.osm.pbf", dst)
+download.file("https://download.geofabrik.de/europe/cyprus-latest.osm.pbf", dst, mode="wb")
 
 library(ghroute)
 ## create router for Cyprus with defaults car and fastest
