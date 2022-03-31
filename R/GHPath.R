@@ -11,7 +11,7 @@ print.GHPath <- function(x, ..., short=FALSE) {
     cat("GHPath of ", length(x), " points", if (x$path$hasErrors()) " (with errors!)" else "", "\n", sep='')
     if (short) return(invisible(x))
     pt <- ll(x)
-    head(pt, 4)
+    print(head(pt, 4))
     if (nrow(pt) > 4) cat("[...]\n")
     invisible(x)
 }
