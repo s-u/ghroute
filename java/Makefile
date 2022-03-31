@@ -1,9 +1,9 @@
 GHVER=4.0
 GHJAR=graphhopper-web-$(GHVER).jar
 
-ghtools.jar: GHTools.java $(GHJAR)
+ghtools.jar: GHTools.java GHRouter.java $(GHJAR)
 	rm -rf nz
-	javac -target 1.8 -source 1.8 -d . -cp $(GHJAR) GHTools.java
+	javac -target 1.8 -source 1.8 -d . -cp $(GHJAR) GHTools.java GHRouter.java
 	jar fc $@ nz
 	rm -rf nz
 
