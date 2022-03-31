@@ -3,8 +3,9 @@ Title: GraphHopper Routing and Navigation
 Version: 0.2-0
 Author: Simon Urbanek <simon.urbanek@R-project.org>
 Maintainer: Simon Urbanek <simon.urbanek@R-project.org>
-Description: Provides functions for efficient calculation of routes and navigation using Open Street Map and public transport data. It includes GraphHopper and is self-contained without the need of any API or service.
+Description: Provides functions for efficient calculation of routes and navigation using Open Street Map and public transport data. It directly embeds GraphHopper into R and is self-contained without the need for any API or service. It supports parallel multi-threaded routing of many routes in one batch.
 Imports: rJava (>= 1.0)
 Suggests: sf
 License: Apache License 2.0
 SystemRequirements: Java >= 8
+BugReports: https://github.com/s-u/ghroute
