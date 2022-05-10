@@ -24,6 +24,10 @@ router <- function(osm.file, path="graphhopper-cache", profiles="car", open=TRUE
 	if (!file.exists(osm.file)) stop("osm.file does not exist")
 	if (is.character(profiles))
 		profiles <- lapply(profiles, gh.profile)
+	if (!is.list(profiles) && is(profiles, "jobjRef")) ## allow non-wrapped profile
+		profiles <- list(profiles)
+	if (!is.list(profiles))
+		stop("profiles must be either a character vector or a list of profile objects from gh.profile()")
 	h <- .jnew("com.graphhopper.GraphHopper", class.loader=.rJava.class.loader)
 	h$setOSMFile(osm.file)
 	h$setGraphHopperLocation(path)
