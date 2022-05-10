@@ -1,6 +1,6 @@
 Package: ghroute
 Title: GraphHopper Routing and Navigation
-Version: 0.2-0
+Version: 0.2-1
 Author: Simon Urbanek <simon.urbanek@R-project.org>
 Maintainer: Simon Urbanek <simon.urbanek@R-project.org>
 Description: Provides functions for efficient calculation of routes and navigation using Open Street Map and public transport data. It directly embeds GraphHopper into R and is self-contained without the need for any API or service. It supports parallel multi-threaded routing of many routes in one batch.
