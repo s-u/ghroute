@@ -130,6 +130,21 @@ it to \code{router}.
 Simon Urbanek
 }
 \note{
+  The \code{router()} uses the \code{rJava} package to perform the
+  routing using the GraphHopper Java classes. GraphHopper may need
+  significant amount of RAM depending on the size of the map used. For
+  larger maps it is recommended to increase the amount of memory
+  available to Java by setting the \code{java.parameters} option
+  \emph{before} the first call to \code{router()}, e.g.:
+
+  \code{options(java.parameters="-Xmx8g")}
+
+  will allow Java to use up to 8Gb of memory. Note that the amount of
+  Java memory cannot be changed once Java is initialized, so if you load
+  any other R package which uses Java it may have already limited the
+  memory usage, so either setting the option early or starting the
+  router first is a good option.
+
 The functions above are a very thin API over GraphHopper Java
 classes. It is possible to create more complex routing constraints by
 using the Java classes directly. For example, the \code{gh.profile}
